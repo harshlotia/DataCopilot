@@ -39,14 +39,6 @@ def _render_sidebar() -> str:
         st.caption("Spark · Delta Lake · Claude AI")
         st.divider()
 
-        api_key = st.text_input(
-            "Anthropic API Key",
-            value=os.getenv("ANTHROPIC_API_KEY", ""),
-            type="password",
-            help="Get a free key at console.anthropic.com",
-        )
-
-        st.divider()
         st.subheader("Data Source")
 
         source = st.radio("Choose", ["Demo E-Commerce Dataset", "Upload your own CSV(s)"], label_visibility="collapsed")
@@ -79,7 +71,7 @@ def _render_sidebar() -> str:
         st.divider()
         st.caption("Built with Databricks · Spark · Delta Lake · Claude API")
 
-    return api_key
+    return os.getenv("ANTHROPIC_API_KEY", "")
 
 
 # ── Tab 1: Data Overview ────────────────────────────────────────────────────
