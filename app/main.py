@@ -32,6 +32,14 @@ def _init_state():
         st.session_state.nl_history = []
     if "nl_question" not in st.session_state:
         st.session_state.nl_question = ""
+    if "nl_auto_run" not in st.session_state:
+        st.session_state.nl_auto_run = False
+    if "nl_last_sql" not in st.session_state:
+        st.session_state.nl_last_sql = ""
+    if "nl_last_result" not in st.session_state:
+        st.session_state.nl_last_result = None
+    if "nl_last_insight" not in st.session_state:
+        st.session_state.nl_last_insight = ""
 
 
 # ── Sidebar ─────────────────────────────────────────────────────────────────
@@ -119,11 +127,9 @@ def _tab_nl_sql(api_key: str):
     st.header("Ask Questions (Natural Language → SQL)")
 
     if not api_key:
-        st.warning("Enter your Anthropic API key in the sidebar to use this feature.")
+        st.warning("No Anthropic API key configured. Add it in Streamlit Cloud secrets.")
         return
 
-    # Suggested questions
-    st.caption("Try one of these or type your own:")
     suggestions = [
         "What are the top 5 product categories by total revenue?",
         "Show monthly order count trends for 2024",
@@ -131,56 +137,71 @@ def _tab_nl_sql(api_key: str):
         "What percentage of orders were cancelled by category?",
         "Who are the top 10 customers by total spending?",
     ]
+
+    st.caption("Try one of these or type your own:")
     cols = st.columns(3)
-    for i, s in enumerate(suggestions[:6]):
+    for i, s in enumerate(suggestions):
         if cols[i % 3].button(s, key=f"sug_{i}", use_container_width=True):
             st.session_state.nl_question = s
+            st.session_state.nl_auto_run = True
 
-    question = st.text_input(
+    typed = st.text_input(
         "Your question",
         value=st.session_state.nl_question,
         placeholder="e.g. What was average order value last month?",
-        key="nl_question_input",
     )
-    if question != st.session_state.nl_question:
-        st.session_state.nl_question = question
+    # If user manually edits the box, update state and clear old results
+    if typed != st.session_state.nl_question:
+        st.session_state.nl_question = typed
+        st.session_state.nl_last_sql = ""
+        st.session_state.nl_last_result = None
+        st.session_state.nl_last_insight = ""
 
-    if st.button("Run", type="primary", disabled=not st.session_state.nl_question):
+    run_clicked = st.button("Run", type="primary", disabled=not st.session_state.nl_question)
+
+    # Execute when Run is clicked OR a suggestion button was clicked
+    if (run_clicked or st.session_state.nl_auto_run) and st.session_state.nl_question:
+        st.session_state.nl_auto_run = False
+        question = st.session_state.nl_question
         nl = NLToSQL(api_key)
         schema = st.session_state.db.get_schema()
 
-        question = st.session_state.nl_question
         with st.spinner("Generating SQL..."):
             try:
                 sql = nl.generate_sql(question, schema)
+                st.session_state.nl_last_sql = sql
             except Exception as e:
                 st.error(f"SQL generation failed: {e}")
                 return
 
-        st.code(sql, language="sql")
-
         with st.spinner("Running query..."):
             try:
                 result_df = st.session_state.db.execute_query(sql)
+                st.session_state.nl_last_result = result_df
             except Exception as e:
                 st.error(f"Query execution failed: {e}")
+                st.session_state.nl_last_result = None
                 return
 
-        st.dataframe(result_df, use_container_width=True)
-
-        # Auto-chart
-        _auto_chart(result_df)
-
-        # AI insight
-        summary = result_df.head(5).to_string(index=False)
         with st.spinner("Generating insight..."):
             try:
-                insight = nl.explain_result(question, sql, summary)
-                st.info(f"AI Insight: {insight}")
+                summary = result_df.head(5).to_string(index=False)
+                st.session_state.nl_last_insight = nl.explain_result(question, sql, summary)
             except Exception:
-                pass
+                st.session_state.nl_last_insight = ""
 
         st.session_state.nl_history.append({"question": question, "sql": sql, "rows": len(result_df)})
+
+    # Always render last result (persists across reruns)
+    if st.session_state.nl_last_sql:
+        st.subheader("Generated SQL")
+        st.code(st.session_state.nl_last_sql, language="sql")
+    if st.session_state.nl_last_result is not None:
+        st.subheader("Results")
+        st.dataframe(st.session_state.nl_last_result, use_container_width=True)
+        _auto_chart(st.session_state.nl_last_result)
+    if st.session_state.nl_last_insight:
+        st.info(f"AI Insight: {st.session_state.nl_last_insight}")
 
     # History
     if st.session_state.nl_history:
