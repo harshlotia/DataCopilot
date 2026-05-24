@@ -211,8 +211,10 @@ def _tab_nl_sql(api_key: str):
         st.dataframe(st.session_state.nl_last_result, use_container_width=True)
         _auto_chart(st.session_state.nl_last_result)
     if st.session_state.nl_last_insight:
-        st.subheader("Insight")
-        st.write(st.session_state.nl_last_insight)
+        import re
+        clean = re.sub(r"^#+\s*.+\n?", "", st.session_state.nl_last_insight, flags=re.MULTILINE).strip()
+        if clean:
+            st.caption(f"**Insight:** {clean}")
 
     # History
     if st.session_state.nl_history:
