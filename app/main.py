@@ -314,7 +314,6 @@ def main():
 - Ask questions in plain English — Claude generates and runs the SQL
 - Detect data anomalies with AI-generated explanations
 
-**Backed by:** Databricks notebooks for Spark ETL + Delta Lake storage *(see `/databricks_notebooks/`)*
 """
         )
         return
