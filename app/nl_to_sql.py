@@ -39,7 +39,7 @@ class NLToSQL:
                     "content": (
                         f"Question: {question}\nSQL used: {sql}\nResult summary: {result_summary}\n\n"
                         "Write 1-2 sentences of plain-English insight about this result. Be specific with numbers. "
-                        "Return plain unformatted text only — absolutely no markdown, no ** bold **, no headers, no bullets."
+                        "Return plain unformatted text only — no markdown, no **bold**, no `backticks`, no headers, no bullets."
                     ),
                 }
             ],
