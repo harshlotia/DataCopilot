@@ -40,6 +40,10 @@ def _init_state():
         st.session_state.nl_last_result = None
     if "nl_last_insight" not in st.session_state:
         st.session_state.nl_last_insight = ""
+    if "nl_suggestions" not in st.session_state:
+        st.session_state.nl_suggestions = []
+    if "nl_suggestions_schema" not in st.session_state:
+        st.session_state.nl_suggestions_schema = ""
 
 
 # ── Sidebar ─────────────────────────────────────────────────────────────────
@@ -130,20 +134,26 @@ def _tab_nl_sql(api_key: str):
         st.warning("No Anthropic API key configured. Add it in Streamlit Cloud secrets.")
         return
 
-    suggestions = [
-        "What are the top 5 product categories by total revenue?",
-        "Show monthly order count trends for 2024",
-        "Which states have the most customers?",
-        "What percentage of orders were cancelled by category?",
-        "Who are the top 10 customers by total spending?",
-    ]
+    # Generate suggestions based on current schema (cached — only regenerate when tables change)
+    schema = st.session_state.db.get_schema()
+    if schema != st.session_state.nl_suggestions_schema:
+        with st.spinner("Generating suggested questions for your data..."):
+            try:
+                nl_temp = NLToSQL(api_key)
+                st.session_state.nl_suggestions = nl_temp.generate_suggestions(schema)
+                st.session_state.nl_suggestions_schema = schema
+            except Exception:
+                st.session_state.nl_suggestions = []
 
-    st.caption("Try one of these or type your own:")
-    cols = st.columns(3)
-    for i, s in enumerate(suggestions):
-        if cols[i % 3].button(s, key=f"sug_{i}", use_container_width=True):
-            st.session_state.nl_question = s
-            st.session_state.nl_auto_run = True
+    suggestions = st.session_state.nl_suggestions
+
+    if suggestions:
+        st.caption("Suggested questions for your data:")
+        cols = st.columns(3)
+        for i, s in enumerate(suggestions):
+            if cols[i % 3].button(s, key=f"sug_{i}", use_container_width=True):
+                st.session_state.nl_question = s
+                st.session_state.nl_auto_run = True
 
     typed = st.text_input(
         "Your question",

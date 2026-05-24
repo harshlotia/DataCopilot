@@ -44,6 +44,25 @@ class NLToSQL:
         )
         return msg.content[0].text.strip()
 
+    def generate_suggestions(self, schema: str) -> list[str]:
+        msg = self.client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=300,
+            messages=[
+                {
+                    "role": "user",
+                    "content": (
+                        f"Given this database schema:\n{schema}\n\n"
+                        "Generate exactly 5 interesting natural language questions a business analyst would ask about this data. "
+                        "Each question should be answerable with a single SQL query. "
+                        "Return only the 5 questions, one per line, no numbering, no bullet points."
+                    ),
+                }
+            ],
+        )
+        lines = [l.strip() for l in msg.content[0].text.strip().splitlines() if l.strip()]
+        return lines[:5]
+
     def explain_anomaly(self, anomaly_description: str) -> str:
         msg = self.client.messages.create(
             model="claude-sonnet-4-6",
