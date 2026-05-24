@@ -37,12 +37,16 @@ class NLToSQL:
                     "role": "user",
                     "content": (
                         f"Question: {question}\nSQL used: {sql}\nResult summary: {result_summary}\n\n"
-                        "Write 1-2 sentences of plain-English insight about this result. Be specific with numbers."
+                        "Write 1-2 sentences of plain-English insight about this result. Be specific with numbers. "
+                        "Return plain text only — no markdown, no headers, no bullet points, no bold."
                     ),
                 }
             ],
         )
-        return msg.content[0].text.strip()
+        import re
+        text = msg.content[0].text.strip()
+        text = re.sub(r"^#+\s*\w+\s*\n?", "", text).strip()
+        return text
 
     def generate_suggestions(self, schema: str) -> list[str]:
         msg = self.client.messages.create(
