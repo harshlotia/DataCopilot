@@ -1,4 +1,5 @@
 import re
+
 import anthropic
 
 
@@ -43,9 +44,8 @@ class NLToSQL:
                 }
             ],
         )
-        import re
         text = msg.content[0].text.strip()
-        text = re.sub(r"^#+\s*\w+\s*\n?", "", text).strip()
+        text = re.sub(r"^#+\s*.+\n?", "", text, flags=re.MULTILINE).strip()
         return text
 
     def generate_suggestions(self, schema: str) -> list[str]:

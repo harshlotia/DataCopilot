@@ -211,7 +211,8 @@ def _tab_nl_sql(api_key: str):
         st.dataframe(st.session_state.nl_last_result, use_container_width=True)
         _auto_chart(st.session_state.nl_last_result)
     if st.session_state.nl_last_insight:
-        st.caption(f"insight: {st.session_state.nl_last_insight}")
+        st.subheader("Insight")
+        st.write(st.session_state.nl_last_insight)
 
     # History
     if st.session_state.nl_history:
