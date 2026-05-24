@@ -30,6 +30,8 @@ def _init_state():
         st.session_state.tables_loaded = False
     if "nl_history" not in st.session_state:
         st.session_state.nl_history = []
+    if "nl_question" not in st.session_state:
+        st.session_state.nl_question = ""
 
 
 # ── Sidebar ─────────────────────────────────────────────────────────────────
@@ -130,17 +132,24 @@ def _tab_nl_sql(api_key: str):
         "Who are the top 10 customers by total spending?",
     ]
     cols = st.columns(3)
-    prefill = ""
     for i, s in enumerate(suggestions[:6]):
         if cols[i % 3].button(s, key=f"sug_{i}", use_container_width=True):
-            prefill = s
+            st.session_state.nl_question = s
 
-    question = st.text_input("Your question", value=prefill, placeholder="e.g. What was average order value last month?")
+    question = st.text_input(
+        "Your question",
+        value=st.session_state.nl_question,
+        placeholder="e.g. What was average order value last month?",
+        key="nl_question_input",
+    )
+    if question != st.session_state.nl_question:
+        st.session_state.nl_question = question
 
-    if st.button("Run", type="primary", disabled=not question):
+    if st.button("Run", type="primary", disabled=not st.session_state.nl_question):
         nl = NLToSQL(api_key)
         schema = st.session_state.db.get_schema()
 
+        question = st.session_state.nl_question
         with st.spinner("Generating SQL..."):
             try:
                 sql = nl.generate_sql(question, schema)
