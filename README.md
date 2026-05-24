@@ -1,79 +1,127 @@
-# DataCopilot — AI-Powered Analytics on Databricks
+# DataCopilot
 
-> Natural language querying + automated anomaly detection, powered by Spark, Delta Lake, and Claude AI.
+**AI-powered data analytics platform built on Databricks, Spark, and Claude AI.**
 
-## Live Demo
+Upload any dataset, ask questions in plain English, and get instant SQL-powered charts — with automated data quality monitoring included.
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://your-app.streamlit.app)
+[![Live Demo](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://datacopilot-kxjbgwg6oqvks3keacdmjc.streamlit.app/)
+
+---
 
 ## What it does
 
-| Feature | Tech |
-|---|---|
-| Ingest CSVs into Delta Lake | Apache Spark + Databricks |
-| Profile data quality | PySpark + DuckDB |
-| Ask questions in plain English | Claude AI → SQL → DuckDB |
-| Detect anomalies automatically | IQR, null analysis, duplicate detection |
-| AI explanations for each anomaly | Claude API |
+### Ask Questions in Plain English
+Type a question like *"What are the top 5 categories by revenue?"* and the app:
+- Sends your question + database schema to Claude AI
+- Claude generates valid SQL
+- SQL runs instantly against your data
+- Results appear as a table and chart with a plain-English insight
+
+### Automatic Data Profiling
+Load any CSV and instantly see:
+- Null rates per column (color-coded heatmap)
+- Duplicate row count
+- Data types, unique values, min/max/mean
+- Distribution histograms
+
+### Anomaly Detection
+Automatically scans every table and flags:
+- Columns with high null rates (>20%)
+- Duplicate rows (>5%)
+- Statistical outliers (IQR method)
+- Zero-variance columns
+
+Each anomaly gets an AI-generated explanation of what caused it and what to do.
+
+### Dynamic Suggested Questions
+When you load a dataset, Claude reads the actual schema and generates 5 relevant questions specific to your data — not generic hardcoded ones.
+
+---
 
 ## Architecture
 
 ```
-CSV / Demo Data
-      ↓
-Databricks (Spark ETL → Delta Lake)   ← notebooks/
-      ↓
-DuckDB (in-process query layer)        ← fast, no cluster needed for demo
-      ↓
-Streamlit App                          ← app/
-  ├── Data Overview (profiling)
-  ├── Ask Questions (NL → SQL via Claude)
-  └── Anomaly Report (AI-explained issues)
-      ↓
-Deploy: Streamlit Cloud (free)
+Your Data (CSV upload or built-in demo)
+           │
+           ▼
+  Databricks + Apache Spark          ← Heavy ETL, Delta Lake storage
+  (databricks_notebooks/)            ← Run in Databricks Community Edition
+           │
+           ▼
+        DuckDB                       ← In-process SQL for the live app
+           │                            (instant queries, no cluster wait)
+           ▼
+     Streamlit App
+    ┌──────────────────────────────┐
+    │  Tab 1: Data Overview        │  ← Profiling, distributions, nulls
+    │  Tab 2: Ask Questions        │  ← NL → Claude → SQL → Chart
+    │  Tab 3: Anomaly Report       │  ← Auto-detection + AI explanations
+    └──────────────────────────────┘
+           │
+           ▼
+    Streamlit Cloud (live URL)
 ```
 
-## Quick Start
+**Why two layers?** Databricks clusters take minutes to start — not suitable for a live demo. Databricks handles the heavy Spark/Delta work; DuckDB handles instant queries in the deployed app.
+
+---
+
+## Run Locally
 
 ```bash
-cd DataCopilot
+# 1. Install dependencies
 pip install -r requirements.txt
 
-# Add your Anthropic API key
+# 2. Add your Anthropic API key
 cp .env.example .env
-# Edit .env with your key from console.anthropic.com
+# Open .env and paste your key from console.anthropic.com
 
-# Run the app
+# 3. Start the app
 streamlit run app/main.py
 ```
 
+---
+
 ## Databricks Notebooks
 
-Run in order inside Databricks Community Edition:
+Run these in order inside **Databricks Community Edition** to see the full Spark + Delta Lake pipeline:
 
-1. `databricks_notebooks/01_ingest_ecommerce.py` — Generate data + write to Delta Lake
-2. `databricks_notebooks/02_spark_profiling.py` — Spark-powered data profiling + SQL analytics
-3. `databricks_notebooks/03_anomaly_detection.py` — Scale anomaly detection with Spark
+| Notebook | What it does |
+|---|---|
+| `01_ingest_ecommerce.py` | Generate synthetic e-commerce data, write to Delta Lake |
+| `02_spark_profiling.py` | Spark-powered data profiling, SQL analytics at scale |
+| `03_anomaly_detection.py` | Distributed anomaly detection using PySpark |
 
-## Deploy to Streamlit Cloud (free)
-
-1. Push this repo to GitHub
-2. Go to [share.streamlit.io](https://share.streamlit.io)
-3. Connect your GitHub repo
-4. Set **Main file path** to `app/main.py`
-5. Add `ANTHROPIC_API_KEY` in Secrets
-6. Deploy
-
-## Resume Bullet
-
-> Built DataCopilot, a Databricks-based AI analytics platform using Apache Spark, Delta Lake, and Claude AI, enabling natural language querying over large-scale e-commerce datasets and automated anomaly detection with AI-generated explanations; deployed live on Streamlit Cloud.
+---
 
 ## Tech Stack
 
-- **Databricks Community Edition** — cluster management, notebook environment
-- **Apache Spark / PySpark** — distributed ETL and profiling
-- **Delta Lake** — ACID transactions, time travel, schema evolution
-- **DuckDB** — in-process SQL for the deployed app
-- **Claude API (claude-sonnet-4-6)** — NL→SQL generation and anomaly explanation
-- **Streamlit** — frontend and deployment
-- **Plotly** — interactive charts
+| Layer | Technology |
+|---|---|
+| Big Data Processing | Apache Spark / PySpark |
+| Data Storage | Delta Lake (ACID, time travel) |
+| Notebook Environment | Databricks Community Edition |
+| In-App Query Engine | DuckDB |
+| AI / NL→SQL | Claude API (claude-sonnet-4-6) |
+| Frontend | Streamlit |
+| Charts | Plotly |
+
+---
+
+## Project Structure
+
+```
+DataCopilot/
+├── app/
+│   ├── main.py               # Streamlit app — 3 tabs
+│   ├── nl_to_sql.py          # Claude API: NL→SQL + suggestions + insights
+│   ├── anomaly_detector.py   # IQR, null, duplicate detection
+│   ├── data_profiler.py      # Column-level profiling
+│   ├── db_manager.py         # DuckDB query layer
+│   └── demo_data.py          # Synthetic e-commerce dataset generator
+├── databricks_notebooks/
+│   ├── 01_ingest_ecommerce.py
+│   ├── 02_spark_profiling.py
+│   └── 03_anomaly_detection.py
+└── requirements.txt
+```
