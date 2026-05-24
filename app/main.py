@@ -212,9 +212,12 @@ def _tab_nl_sql(api_key: str):
         _auto_chart(st.session_state.nl_last_result)
     if st.session_state.nl_last_insight:
         import re
-        clean = re.sub(r"^#+\s*.+\n?", "", st.session_state.nl_last_insight, flags=re.MULTILINE).strip()
+        clean = st.session_state.nl_last_insight
+        clean = re.sub(r"^#+\s*.+\n?", "", clean, flags=re.MULTILINE)  # strip headers
+        clean = re.sub(r"\*{1,2}(.+?)\*{1,2}", r"\1", clean)           # strip bold/italic
+        clean = clean.strip()
         if clean:
-            st.caption(f"**Insight:** {clean}")
+            st.caption(f"Insight: {clean}")
 
     # History
     if st.session_state.nl_history:
