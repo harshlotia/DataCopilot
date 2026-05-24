@@ -215,10 +215,10 @@ def _tab_nl_sql(api_key: str):
         clean = st.session_state.nl_last_insight
         clean = re.sub(r"^#+\s*.+\n?", "", clean, flags=re.MULTILINE)
         clean = re.sub(r"\*{1,2}(.+?)\*{1,2}", r"\1", clean)
-        clean = re.sub(r"`(.+?)`", r"\1", clean)
+        clean = clean.replace("`", "")
         clean = clean.strip()
         if clean:
-            st.write(f"Insight: {clean}")
+            st.markdown(f"<p style='font-size:0.95rem;'>Insight: {clean}</p>", unsafe_allow_html=True)
 
     # History
     if st.session_state.nl_history:
