@@ -4,7 +4,7 @@
 
 Upload any dataset, ask questions in plain English, and get instant SQL-powered charts — with automated data quality monitoring included.
 
-[![Live Demo](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://datacopilot-kxjbgwg6oqvks3keacdmjc.streamlit.app/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Railway-blueviolet?style=for-the-badge&logo=railway)](https://web-production-3bacd.up.railway.app/)
 
 ---
 
@@ -59,7 +59,7 @@ Your Data (CSV upload or built-in demo)
     └──────────────────────────────┘
            │
            ▼
-    Streamlit Cloud (live URL)
+    Railway (live URL — always on)
 ```
 
 **Why two layers?** Databricks clusters take minutes to start — not suitable for a live demo. Databricks handles the heavy Spark/Delta work; DuckDB handles instant queries in the deployed app.
