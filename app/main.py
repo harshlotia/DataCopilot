@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 from anomaly_detector import AnomalyDetector
 from data_profiler import profile_table
 from db_manager import DBManager
-from demo_data import generate_demo_tables
+from demo_data import generate_demo_tables, generate_stock_tables, generate_hospital_tables, generate_hr_tables
 from nl_to_sql import NLToSQL
 
 load_dotenv()
@@ -250,37 +250,50 @@ def _render_sidebar() -> str:
         st.markdown("## DataCopilot")
         st.divider()
 
-        st.markdown("**Data Source**")
-        source = st.radio(
-            "source",
-            ["Demo E-Commerce Dataset", "Upload your own file"],
+        st.markdown("**Demo Datasets**")
+        demo_choice = st.selectbox(
+            "demo",
+            ["E-Commerce", "Stock Market", "Hospital / Healthcare", "HR / Employees"],
             label_visibility="collapsed",
         )
-
-        if source == "Demo E-Commerce Dataset":
-            if st.button("Load Demo Dataset", use_container_width=True):
-                with st.spinner("Generating 5,000 synthetic orders..."):
-                    tables = generate_demo_tables()
-                    for name, df in tables.items():
-                        st.session_state.db.register_dataframe(name, df)
-                    st.session_state.tables_loaded = True
-                st.success("Loaded 4 tables")
-        else:
-            st.caption("CSV · Excel · Parquet · SQLite")
-            files = st.file_uploader(
-                "Upload files",
-                type=["csv", "xlsx", "xls", "parquet", "db", "sqlite", "sqlite3"],
-                accept_multiple_files=True,
-                label_visibility="collapsed",
-            )
-            if files:
-                for f in files:
-                    loaded = _load_file(f)
-                    for name, df in loaded.items():
-                        st.session_state.db.register_dataframe(name, df)
+        demo_map = {
+            "E-Commerce":           ("5,000 orders · 4 tables",   generate_demo_tables),
+            "Stock Market":         ("12 tickers · 2 years daily", generate_stock_tables),
+            "Hospital / Healthcare":("8,000 visits · 4 tables",   generate_hospital_tables),
+            "HR / Employees":       ("1,500 employees · 3 tables", generate_hr_tables),
+        }
+        hint, loader = demo_map[demo_choice]
+        st.caption(hint)
+        if st.button("Load Dataset", use_container_width=True):
+            with st.spinner(f"Generating {demo_choice} data..."):
+                st.session_state.db = DBManager()
+                tables = loader()
+                for name, df in tables.items():
+                    st.session_state.db.register_dataframe(name, df)
                 st.session_state.tables_loaded = True
-                total = sum(1 for _ in files)
-                st.success(f"Loaded {total} file(s)")
+                st.session_state.nl_suggestions = []
+                st.session_state.nl_suggestions_schema = ""
+                st.session_state.nl_last_sql = ""
+                st.session_state.nl_last_result = None
+                st.session_state.nl_last_insight = ""
+            st.success(f"Loaded {len(tables)} tables")
+
+        st.divider()
+        st.markdown("**Upload your own file**")
+        st.caption("CSV · Excel · Parquet · SQLite")
+        files = st.file_uploader(
+            "Upload files",
+            type=["csv", "xlsx", "xls", "parquet", "db", "sqlite", "sqlite3"],
+            accept_multiple_files=True,
+            label_visibility="collapsed",
+        )
+        if files:
+            for f in files:
+                loaded = _load_file(f)
+                for name, df in loaded.items():
+                    st.session_state.db.register_dataframe(name, df)
+            st.session_state.tables_loaded = True
+            st.success(f"Loaded {len(files)} file(s)")
 
         if st.session_state.tables_loaded:
             st.divider()
