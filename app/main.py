@@ -248,7 +248,6 @@ def _render_kpis():
 def _render_sidebar() -> str:
     with st.sidebar:
         st.markdown("## DataCopilot")
-        st.caption("Databricks · Spark · Delta Lake · Claude AI")
         st.divider()
 
         st.markdown("**Data Source**")
@@ -290,8 +289,6 @@ def _render_sidebar() -> str:
                 count = st.session_state.db.get_row_count(t)
                 st.markdown(f"<small>📋 **{t}** — {count:,} rows</small>", unsafe_allow_html=True)
 
-        st.divider()
-        st.caption("Built with Databricks · Spark · Delta Lake · Claude API")
 
     return os.getenv("ANTHROPIC_API_KEY", "")
 
